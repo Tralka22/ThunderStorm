@@ -1,6 +1,5 @@
 # ThunderStorm
 Cool 2D roguelike
-```
 - [x] Physics
 - [x] Animations
 - [x] Platforms
@@ -10,4 +9,3 @@ Cool 2D roguelike
 - [ ] Weapons
 - [ ] Enemies
 - [ ] Ending
-```
