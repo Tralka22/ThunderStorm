@@ -1,17 +1,13 @@
 # ThunderStorm
 Cool 2D roguelike
-Ready:
 ```
-- Physics
-- Animations
-- Platforms
-- Realistic sky
-```
-To-Do:
-```
-- Money
-- Health
-- Weapons
-- Enemies
-- Ending
+- [x] Physics
+- [x] Animations
+- [x] Platforms
+- [x] Realistic sky
+- [ ] Money
+- [ ] Health
+- [ ] Weapons
+- [ ] Enemies
+- [ ] Ending
 ```
