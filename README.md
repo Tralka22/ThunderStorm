@@ -4,7 +4,7 @@ Cool 2D roguelike
 - [x] Animations
 - [x] Platforms
 - [x] Realistic sky
-- [x] Particles (made, but not implemented)
+- [x] Particles
 - [ ] Money
 - [ ] Health
 - [ ] Weapons
