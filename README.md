@@ -6,7 +6,8 @@ Cool 2D roguelike
 - [x] Realistic sky
 - [x] Particles
 - [x] Money (implemented, but have no use)
-- [ ] Health
+- [x] Health
+- [ ] Death
 - [ ] Weapons
 - [ ] Enemies
 - [ ] Ending
