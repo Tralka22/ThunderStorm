@@ -36,6 +36,9 @@ class Character(pygame.sprite.Sprite):
             self.game = game
             self.direction = -1
             self.coins = 15
+            self.health = 60
+            self.maxHealth = 100
+            self.dead = False
 
     def update(self):
         self.acc = vector(0, 2)
@@ -91,6 +94,12 @@ class Character(pygame.sprite.Sprite):
         self.world_pos = [int(i) for i in self.world_pos]
         self.rect.midbottom = self.pos
         self.image = pygame.transform.scale(self.image, ((55, 60)))
+        self.health += random.randint(-1, 1)
+        if self.health > self.maxHealth:
+            self.health = self.maxHealth
+        if self.health <= 0 and not self.dead:
+            print('ded')
+            self.dead = True
 
     def jump(self):
         self.rect.x += 1
@@ -101,3 +110,4 @@ class Character(pygame.sprite.Sprite):
             self.game.particles.append(particles.Explosion(self.rect.midbottom, 100, 100, self.game.screen))
             self.game.particles.append(particles.Lightning(self.rect.midbottom, (0, 0), 100, self.game.screen))
             self.coins += 1
+            self.health -= 20

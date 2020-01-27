@@ -68,10 +68,15 @@ class Game:
                 self.particles.remove(i)
         
         text = pygame.font.Font(None, 30).render(f'Coordinates: {self.player.world_pos}', 1, (255, 0, 0))
-        self.screen.blit(text, (0, 0))
+        self.screen.blit(text, (0, 5))
         
         text = pygame.font.Font(None, 30).render(f'{self.player.coins}$', 1, (255, 255, 0))
         self.screen.blit(text, (0, 30))
+        
+        pygame.draw.rect(self.screen, (0, 0, 0), (WIDTH - self.player.maxHealth * 2, 0, self.player.maxHealth * 2, 30))
+        pygame.draw.rect(self.screen, (255, 0, 0), (WIDTH - self.player.health * 2, 0, self.player.health * 2, 30))
+        text = pygame.font.Font(None, 30).render(f'{self.player.health}', 1, (255, 255, 255))
+        self.screen.blit(text, (WIDTH - self.player.maxHealth * 2, 0))
         
         pygame.display.flip()
 
