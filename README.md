@@ -5,7 +5,7 @@ Cool 2D roguelike
 - [x] Platforms
 - [x] Realistic sky
 - [x] Particles
-- [ ] Money
+- [x] Money (implemented, but have no use)
 - [ ] Health
 - [ ] Weapons
 - [ ] Enemies
