@@ -21,24 +21,24 @@ class Particle:
 
 
 class Lightning(Particle):
-    def __init__(self, pos1, pos2, age, screen):
+    def __init__(self, pos, pos2, age, screen):
         self.age = 0
         self.active = True
         self.screen = screen
         self.death = age
-        self.pos1 = pos1
+        self.pos = pos
         self.pos2 = pos2
 
     def perform(self):
         tc = []
         random.seed()
-        p3 = (self.pos1[0] + int(((self.pos2[0] - self.pos1[0] + 5) // 2) * random.uniform(1, 1.5)),
-              self.pos1[1] + int(((self.pos2[1] - self.pos1[1] + 5) // 2) * random.uniform(1, 1.5)))
-        tc.append(self.pos1)
+        p3 = (self.pos[0] + int(((self.pos2[0] - self.pos[0] + 5) // 2) * random.uniform(1, 1.5)),
+              self.pos[1] + int(((self.pos2[1] - self.pos[1] + 5) // 2) * random.uniform(1, 1.5)))
+        tc.append(self.pos)
         tc.append(p3)
         tc.append(self.pos2)
         for i in range(len(tc) - 1):
-            pygame.draw.line(screen, (0, 255, 255), tc[i], tc[i + 1], random.randint(1, 5))
+            pygame.draw.line(self.screen, (0, 255, 255), tc[i], tc[i + 1], random.randint(1, 5))
             random.seed()
 
 
@@ -53,10 +53,14 @@ class Explosion(Particle):
     
     def perform(self):
         alpha = 255 - int(255 * (self.age / self.death))
-        pygame.draw.circle(screen, (alpha, alpha, 0), self.pos, int(self.diameter * (self.age / self.death)))
-        pygame.draw.circle(screen, (alpha, alpha // 2, 0), self.pos, int(self.diameter * (self.age / self.death)), int(self.diameter * (self.age / self.death) * 0.5))
+        surf = pygame.Surface((800, 600))
+        surf.set_colorkey((0, 0, 0))
+        surf.set_alpha(int(255 * (1 - self.age / self.death)))
+        pygame.draw.circle(surf, (alpha, alpha, 0), self.pos, int(self.diameter * (self.age / self.death)))
+        pygame.draw.circle(surf, (alpha, alpha // 2, 0), self.pos, int(self.diameter * (self.age / self.death)), int(self.diameter * (self.age / self.death) * 0.5))
+        self.screen.blit(surf, (0, 0))
 
-pygame.init()
+'''pygame.init()
 size = width, height = 1200, 900
 screen = pygame.display.set_mode(size)
 fps = 120
@@ -83,4 +87,4 @@ while running:
             particles.remove(i)
     pygame.display.flip()
     clock.tick(fps)
-pygame.quit()
+pygame.quit()'''

@@ -4,7 +4,9 @@ import characters
 FPS = 60
 WIDTH = 800
 HEIGHT = 600
-PLATFORMS = [(0, HEIGHT - 40, WIDTH, 40), (1000, 400, 50, 50)]
+PLATFORMS = [(0, HEIGHT - 40, WIDTH, 40),
+             (1000, 400, 50, 50),
+             (1200, 300, WIDTH // 2, 20)]
 
 class Platform(pygame.sprite.Sprite):
     def __init__(self, x, y, w, h):
@@ -34,6 +36,7 @@ class Game:
             p1 = Platform(x, y, w, h)
             self.all_sprites.add(p1)
             self.platforms.add(p1)
+        self.particles = []
         self.run()
 
     def run(self):
@@ -47,12 +50,6 @@ class Game:
 
     def update(self):
         self.all_sprites.update()
-        if self.player.vel.y > 0:
-            hits = hits = pygame.sprite.spritecollide(self.player, self.platforms, False)
-            if hits:
-                self.player.pos.y = hits[0].rect.top
-                self.player.vel.y = 0
-            self.player.hits = hits
 
     def events(self):
         for event in pygame.event.get():
@@ -67,7 +64,10 @@ class Game:
         
         text = pygame.font.Font(None, 30).render(f'Coordinates: {self.player.world_pos}', 1, (255, 0, 0))
         self.screen.blit(text, (0, 0))
-        
+        for i in self.particles:
+            i.update()
+            if not i.active:
+                self.particles.remove(i)
         pygame.display.flip()
 
 g = Game()

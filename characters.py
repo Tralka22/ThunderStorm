@@ -1,5 +1,6 @@
 import pygame
 import random
+import particles
 import sys
 import os
 
@@ -36,7 +37,7 @@ class Character(pygame.sprite.Sprite):
             self.direction = -1
 
     def update(self):
-        self.acc = vector(0, 2)
+        self.acc = vector(0, 1)
         
         keys = pygame.key.get_pressed()
         if keys[pygame.K_d] or keys[pygame.K_RIGHT]:
@@ -67,9 +68,22 @@ class Character(pygame.sprite.Sprite):
             for tile in self.game.platforms.sprites():
                 newx = tile.rect.midbottom[0] - self.vel.x + 0.5 * self.acc.x
                 tile.rect.midbottom = newx, tile.rect.midbottom[1]
+            for particle in self.game.particles:
+                newx = particle.pos[0] - self.vel.x + 0.5 * self.acc.x
+                particle.pos = int(newx), particle.pos[1]
+        
         self.pos.y += self.vel.y + 5 * self.acc.y
         self.world_pos[1] += self.vel.y + 5 * self.acc.y
+        if self.vel.y > 0:
+            hits = pygame.sprite.spritecollide(self, self.game.platforms, False)
+            if hits:
+                self.pos.y = hits[0].rect.top
+                self.world_pos[1] = self.pos.y
+                self.vel.y = 0
+            self.hits = hits
+        
         self.world_pos[0] += self.vel.x + 0.5 * self.acc.x
+        
         self.world_pos = [int(i) for i in self.world_pos]
         self.rect.midbottom = self.pos
         self.image = pygame.transform.scale(self.image, ((55, 60)))
@@ -79,4 +93,6 @@ class Character(pygame.sprite.Sprite):
         hits = pygame.sprite.spritecollide(self, self.game.platforms, False)
         self.rect.x -= 1
         if hits:
-            self.vel.y = -30
+            self.vel.y = -40
+            self.game.particles.append(particles.Explosion(self.rect.midbottom, 100, 100, self.game.screen))
+            self.game.particles.append(particles.Lightning(self.rect.midbottom, (0, 0), 100, self.game.screen))
