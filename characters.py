@@ -35,9 +35,10 @@ class Character(pygame.sprite.Sprite):
             self.acc = vector(0, 0)
             self.game = game
             self.direction = -1
+            self.coins = 15
 
     def update(self):
-        self.acc = vector(0, 1)
+        self.acc = vector(0, 2)
         
         keys = pygame.key.get_pressed()
         if keys[pygame.K_d] or keys[pygame.K_RIGHT]:
@@ -71,6 +72,9 @@ class Character(pygame.sprite.Sprite):
             for particle in self.game.particles:
                 newx = particle.pos[0] - self.vel.x + 0.5 * self.acc.x
                 particle.pos = int(newx), particle.pos[1]
+                if isinstance(particle, particles.Lightning):
+                    newx = particle.pos2[0] - self.vel.x + 0.5 * self.acc.x
+                    particle.pos2 = int(newx), particle.pos2[1]
         
         self.pos.y += self.vel.y + 5 * self.acc.y
         self.world_pos[1] += self.vel.y + 5 * self.acc.y
@@ -93,6 +97,7 @@ class Character(pygame.sprite.Sprite):
         hits = pygame.sprite.spritecollide(self, self.game.platforms, False)
         self.rect.x -= 1
         if hits:
-            self.vel.y = -40
+            self.vel.y = -50
             self.game.particles.append(particles.Explosion(self.rect.midbottom, 100, 100, self.game.screen))
             self.game.particles.append(particles.Lightning(self.rect.midbottom, (0, 0), 100, self.game.screen))
+            self.coins += 1

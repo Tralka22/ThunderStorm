@@ -62,12 +62,17 @@ class Game:
         self.screen.blit(pygame.transform.scale(characters.load_image("sky.png"), (WIDTH, HEIGHT)), (0, 0))
         self.all_sprites.draw(self.screen)
         
-        text = pygame.font.Font(None, 30).render(f'Coordinates: {self.player.world_pos}', 1, (255, 0, 0))
-        self.screen.blit(text, (0, 0))
         for i in self.particles:
             i.update()
             if not i.active:
                 self.particles.remove(i)
+        
+        text = pygame.font.Font(None, 30).render(f'Coordinates: {self.player.world_pos}', 1, (255, 0, 0))
+        self.screen.blit(text, (0, 0))
+        
+        text = pygame.font.Font(None, 30).render(f'{self.player.coins}$', 1, (255, 255, 0))
+        self.screen.blit(text, (0, 30))
+        
         pygame.display.flip()
 
 g = Game()
