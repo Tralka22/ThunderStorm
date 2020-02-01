@@ -7,8 +7,11 @@ Cool 2D roguelike
 - [x] Particles
 - [x] Money (implemented, but have no use)
 - [x] Health
+- [x] Music
+- [x] Pause
+- [x] Fullscreen option
 - [ ] Death
 - [ ] Weapons
-- [ ] Enemies
+- [x] Enemies
 - [ ] Ending
 - [ ] Settings
