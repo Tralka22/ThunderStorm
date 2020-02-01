@@ -21,27 +21,61 @@ def load_image(name, colorkey=None):
     return image
 
 
-class Character(pygame.sprite.Sprite):
+class MeleeEnemy(pygame.sprite.Sprite):
     def __init__(self, game):
-            pygame.sprite.Sprite.__init__(self)
-            self.frame = 0
-            self.image = load_image(f'run{self.frame}.png', -1)
-            self.image = pygame.transform.scale(self.image, ((55, 60)))
-            self.rect = self.image.get_rect()
-            self.rect.center = (WIDTH / 2, HEIGHT / 2)
-            self.world_pos = [WIDTH / 2, HEIGHT / 2]
-            self.pos = vector(WIDTH / 2, HEIGHT / 2)
-            self.vel = vector(0, 0)
-            self.acc = vector(0, 0)
-            self.game = game
-            self.direction = -1
-            self.coins = 15
-            self.health = 60
-            self.maxHealth = 100
-            self.dead = False
+        pygame.sprite.Sprite.__init__(self)
+        self.image = load_image('enemy1.png', -1)
+        self.rect = self.image.get_rect()
+        self.rect.center = (10, 10)
+        self.angle = 0
+        self.game = game
+        self.game.all_sprites.add(self)
+        self.game.enemies_mel.add(self)
 
     def update(self):
-        self.acc = vector(0, 2)
+        n1 = random.randint(-2, 2)
+        n2 = random.randint(-2, 2)
+
+        player_pos = self.game.player.rect.center
+        
+        delta_x = player_pos[0] - self.rect.center[0]
+        delta_y = player_pos[1] - self.rect.center[1]
+
+        if delta_x != 0:
+            n1 += delta_x // abs(delta_x)
+        if delta_y != 0:
+            n2 += delta_y // abs(delta_y)
+        
+        cr = (self.rect.center[0] + n1, self.rect.center[1] + n2)
+        #self.angle += n1 * n2 % 360
+        #self.image = pygame.transform.rotate(self.image, self.angle)
+        #self.rect = self.image.get_rect()
+        self.rect.center = cr
+
+
+class Character(pygame.sprite.Sprite):
+    def __init__(self, game):
+        pygame.sprite.Sprite.__init__(self)
+        self.frame = 0
+        self.image = load_image(f'run{self.frame}.png', -1)
+        self.image = pygame.transform.scale(self.image, ((55, 60)))
+        self.rect = self.image.get_rect()
+        self.rect.center = (WIDTH / 2, HEIGHT / 2)
+        self.world_pos = [WIDTH / 2, HEIGHT / 2]
+        self.pos = vector(WIDTH / 2, HEIGHT / 2)
+        self.vel = vector(0, 0)
+        self.acc = vector(0, 0)
+        self.game = game
+        self.direction = -1
+        self.coins = 15
+        self.health = 100
+        self.maxHealth = 100
+        self.dead = False
+
+    def update(self):
+        hits = pygame.sprite.spritecollide(self, self.game.platforms, False)
+        if not hits:
+            self.acc = vector(0, 2)
         
         keys = pygame.key.get_pressed()
         if keys[pygame.K_d] or keys[pygame.K_RIGHT]:
@@ -72,6 +106,11 @@ class Character(pygame.sprite.Sprite):
             for tile in self.game.platforms.sprites():
                 newx = tile.rect.midbottom[0] - self.vel.x + 0.5 * self.acc.x
                 tile.rect.midbottom = newx, tile.rect.midbottom[1]
+
+            for tile in self.game.enemies_mel.sprites():
+                newx = tile.rect.midbottom[0] - self.vel.x + 0.5 * self.acc.x
+                tile.rect.midbottom = newx, tile.rect.midbottom[1]
+
             for particle in self.game.particles:
                 newx = particle.pos[0] - self.vel.x + 0.5 * self.acc.x
                 particle.pos = int(newx), particle.pos[1]
@@ -79,8 +118,6 @@ class Character(pygame.sprite.Sprite):
                     newx = particle.pos2[0] - self.vel.x + 0.5 * self.acc.x
                     particle.pos2 = int(newx), particle.pos2[1]
         
-        self.pos.y += self.vel.y + 5 * self.acc.y
-        self.world_pos[1] += self.vel.y + 5 * self.acc.y
         if self.vel.y > 0:
             hits = pygame.sprite.spritecollide(self, self.game.platforms, False)
             if hits:
@@ -89,17 +126,29 @@ class Character(pygame.sprite.Sprite):
                 self.vel.y = 0
             self.hits = hits
         
-        self.world_pos[0] += self.vel.x + 0.5 * self.acc.x
+        self.pos.y += self.vel.y + 5 * self.acc.y
+        self.world_pos[1] += self.vel.y + 5 * self.acc.y
+        
+        enhits = pygame.sprite.spritecollide(self, self.game.enemies_mel, False)
+        if enhits:
+            self.health -= 10
+            self.game.particles.append(particles.Explosion(enhits[0].rect.center, 100, 100, self.game.screen))
+            enhits[0].kill()
+            en = MeleeEnemy(self.game)
+        
+        
+        self.world_pos[0] += self.vel.x + 5 * self.acc.x
         
         self.world_pos = [int(i) for i in self.world_pos]
         self.rect.midbottom = self.pos
         self.image = pygame.transform.scale(self.image, ((55, 60)))
-        self.health += random.randint(-1, 1)
         if self.health > self.maxHealth:
             self.health = self.maxHealth
-        if self.health <= 0 and not self.dead:
-            print('ded')
-            self.dead = True
+        if self.health <= 0:
+            if not self.dead:
+                print('ded')
+                self.dead = True
+            self.health = 0
 
     def jump(self):
         self.rect.x += 1
@@ -107,7 +156,3 @@ class Character(pygame.sprite.Sprite):
         self.rect.x -= 1
         if hits:
             self.vel.y = -50
-            self.game.particles.append(particles.Explosion(self.rect.midbottom, 100, 100, self.game.screen))
-            self.game.particles.append(particles.Lightning(self.rect.midbottom, (0, 0), 100, self.game.screen))
-            self.coins += 1
-            self.health -= 20
