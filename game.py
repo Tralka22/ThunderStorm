@@ -8,6 +8,7 @@ PLATFORMS = [(0, HEIGHT - 40, WIDTH, 40),
              (1000, 400, 50, 50),
              (1200, 300, WIDTH // 2, 20)]
 
+
 class Platform(pygame.sprite.Sprite):
     def __init__(self, x, y, w, h):
         pygame.sprite.Sprite.__init__(self)
@@ -24,6 +25,7 @@ class Game:
         pygame.mixer.init()
         self.screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.NOFRAME)
         pygame.display.set_caption('Thunderstorm')
+        pygame.display.set_icon(characters.load_image('game-icon.png', -1))
         self.clock = pygame.time.Clock()
         pygame.mixer.music.load('data/theme-1.wav')
         self.running = True
