@@ -7,11 +7,11 @@ Cool 2D roguelike
 - [x] Particles
 - [x] Money (implemented, but have no use)
 - [x] Health
-- [x] Enemies with basic AI
+- [x] Enemies with extended AI
 - [x] Music
 - [x] Pause
 - [x] Fullscreen option
-- [ ] Death
-- [ ] Weapon system
+- [x] Death (without animation, just resets the game)
+- [x] Weapon system (basic bullets)
 - [ ] Ending
 - [ ] Settings
