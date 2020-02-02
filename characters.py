@@ -1,6 +1,7 @@
 import pygame
 import random
 import particles
+import math
 import sys
 import os
 
@@ -47,10 +48,40 @@ class MeleeEnemy(pygame.sprite.Sprite):
             n2 += delta_y // abs(delta_y)
         
         cr = (self.rect.center[0] + n1, self.rect.center[1] + n2)
-        #self.angle += n1 * n2 % 360
-        #self.image = pygame.transform.rotate(self.image, self.angle)
-        #self.rect = self.image.get_rect()
+        
+        self.angle = 45 - int(math.atan2(delta_y, delta_x) * 180 / math.pi)
+        self.image = load_image('enemy1.png', -1)
+        self.image = pygame.transform.rotate(self.image, self.angle)
+        self.rect = self.image.get_rect()
         self.rect.center = cr
+
+
+class Bullet(pygame.sprite.Sprite):
+    def __init__(self, game, start_pos, end_pos):
+        pygame.sprite.Sprite.__init__(self)
+        self.game = game
+        self.hyp = 0
+        self.image = load_image('bullet.png', -1)
+        self.dx = end_pos[0] - start_pos[0]
+        self.dy = end_pos[1] - start_pos[1]
+        self.angle = 180 - int(math.atan2(self.dy, self.dx) * 180 / math.pi)
+        self.image = pygame.transform.rotate(self.image, self.angle)
+        self.rect = self.image.get_rect()
+        self.rect.center = start_pos
+        self.game.all_sprites.add(self)
+        self.game.platforms.add(self)
+        self.start = (start_pos[0], start_pos[1])
+        self.end = end_pos
+
+    def update(self):
+        if self.rect.center == self.end:
+            self.game.particles.append(particles.Explosion(self.rect.center, 10, 10, self.game.screen))
+            self.kill()
+        else:
+            self.hyp += 5
+            x = - int(self.hyp * math.cos(self.angle))
+            y = - int(self.hyp * math.sin(self.angle))
+            self.rect.center = x + self.start[0], self.start[1] - y
 
 
 class Character(pygame.sprite.Sprite):
@@ -101,7 +132,7 @@ class Character(pygame.sprite.Sprite):
             self.jump()
 
         
-        self.acc.x += self.vel.x * (-0.2)
+        self.acc.x += self.vel.x * (-0.25)
         self.vel += self.acc
         self.world_pos[0] += self.vel.x + 0.5 * self.acc.x
         if not ((self.pos.x <= 200 and self.direction == 1) or (self.pos.x >= WIDTH - 200 and self.direction == -1)):
@@ -140,13 +171,17 @@ class Character(pygame.sprite.Sprite):
             en = MeleeEnemy(self.game)
         
         self.world_pos = [int(i) for i in self.world_pos]
+        
+        if self.pos.y >= HEIGHT + 60:
+            self.health -= 5
+            self.pos.y = - 120
+        
         self.rect.midbottom = self.pos
         self.image = pygame.transform.scale(self.image, ((55, 60)))
         if self.health > self.maxHealth:
             self.health = self.maxHealth
         if self.health <= 0:
             if not self.dead:
-                print('ded') # DEATH EVENT
                 self.dead = True
             self.health = 0
         self.image = load_image(f'run{self.frame}.png', -1)
@@ -160,3 +195,6 @@ class Character(pygame.sprite.Sprite):
         if hits:
             pygame.mixer.Sound('data/jump-sound.wav').play()
             self.vel.y = -50
+
+    def shoot(self, pos):
+        b = Bullet(self.game, self.pos, pos)

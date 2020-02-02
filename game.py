@@ -1,5 +1,8 @@
 import pygame
 import characters
+import random
+import os
+os.environ['SDL_VIDEO_WINDOW_POS'] = '0,0'
 
 FPS = 60
 WIDTH = 800
@@ -27,7 +30,11 @@ class Game:
         pygame.display.set_caption('Thunderstorm')
         pygame.display.set_icon(characters.load_image('game-icon.png', -1))
         self.clock = pygame.time.Clock()
-        pygame.mixer.music.load('data/theme-1.wav')
+        pygame.mixer.music.load('data/theme-2.wav')
+        self.cursor_active = pygame.mouse.get_focused()
+        self.mouse_pos = pygame.mouse.get_pos()
+        self.cursor_active = True
+        pygame.mouse.set_visible(False)
         self.running = True
 
     def new(self):
@@ -44,6 +51,7 @@ class Game:
         e = characters.MeleeEnemy(self)
         self.paused = False
         self.fs = False
+        self.player.dead = False
         pygame.mixer.music.play(-1)
         self.run()
 
@@ -59,6 +67,8 @@ class Game:
 
     def update(self):
         self.all_sprites.update()
+        if self.player.dead:
+            self.new()
 
     def events(self):
         for event in pygame.event.get():
@@ -74,6 +84,12 @@ class Game:
                         self.screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.FULLSCREEN)
                     else:
                         self.screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.NOFRAME)
+            if event.type == pygame.MOUSEMOTION:
+                self.cursor_active = pygame.mouse.get_focused()
+                if self.cursor_active:
+                    self.mouse_pos = event.pos
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                self.player.shoot(event.pos)
 
     def draw(self):
         self.screen.fill((0, 0, 0))
@@ -105,6 +121,10 @@ class Game:
             text = pygame.font.Font('data/joker.ttf', 100).render('GAME PAUSED', 1, (255, 255, 255))
             text = pygame.transform.scale(text, (WIDTH // 2, 50))
             self.screen.blit(text, (0, HEIGHT - 100))
+        
+        if self.cursor_active:
+            cursor = characters.load_image('cursor.png', -1)
+            self.screen.blit(cursor, self.mouse_pos)
         pygame.display.flip()
 
 g = Game()
