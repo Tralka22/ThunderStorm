@@ -9,6 +9,9 @@ vector = pygame.math.Vector2
 FPS = 60
 WIDTH = 800
 HEIGHT = 600
+CLASSES = {'warrior': [100, 25, 15, 1.5, 1.5],
+           'magician': [70, 50, 50, 1, 1.2],
+           'dev': [400, 100, 1000, 3, 4]}
 
 def load_image(name, colorkey=None):
     fullname = os.path.join('data', name)
@@ -23,13 +26,14 @@ def load_image(name, colorkey=None):
 
 
 class MeleeEnemy(pygame.sprite.Sprite):
-    def __init__(self, game):
+    def __init__(self, game, lvl):
         pygame.sprite.Sprite.__init__(self)
         self.image = load_image('enemy1.png', -1)
         self.rect = self.image.get_rect()
         self.rect.center = (10, 10)
         self.angle = 0
         self.game = game
+        self.lv = lvl
         self.game.all_sprites.add(self)
         self.game.enemies_mel.add(self)
 
@@ -43,9 +47,9 @@ class MeleeEnemy(pygame.sprite.Sprite):
         delta_y = player_pos[1] - self.rect.center[1]
 
         if delta_x != 0:
-            n1 += delta_x // abs(delta_x)
+            n1 += self.lv * delta_x // abs(delta_x)
         if delta_y != 0:
-            n2 += delta_y // abs(delta_y)
+            n2 += self.lv * delta_y // abs(delta_y)
         
         cr = (self.rect.center[0] + n1, self.rect.center[1] + n2)
         
@@ -54,6 +58,14 @@ class MeleeEnemy(pygame.sprite.Sprite):
         self.image = pygame.transform.rotate(self.image, self.angle)
         self.rect = self.image.get_rect()
         self.rect.center = cr
+        hitts = pygame.sprite.spritecollide(self, self.game.bullets, False)
+        if hitts:
+            self.game.particles.append(particles.Explosion(self.rect.center, 10, 10, self.game.screen))
+            en = MeleeEnemy(self.game, self.game.lvl)
+            self.game.player.coins += 10
+            self.game.lvl += 1
+            hitts[0].kill()
+            self.kill()
 
 
 class Bullet(pygame.sprite.Sprite):
@@ -64,28 +76,29 @@ class Bullet(pygame.sprite.Sprite):
         self.image = load_image('bullet.png', -1)
         self.dx = end_pos[0] - start_pos[0]
         self.dy = end_pos[1] - start_pos[1]
-        self.angle = 180 - int(math.atan2(self.dy, self.dx) * 180 / math.pi)
-        self.image = pygame.transform.rotate(self.image, self.angle)
+        self.angle = int(math.atan2(self.dy, self.dx) * 180 / math.pi)
+        self.image = pygame.transform.rotate(self.image, - self.angle)
         self.rect = self.image.get_rect()
         self.rect.center = start_pos
         self.game.all_sprites.add(self)
         self.game.platforms.add(self)
+        self.game.bullets.add(self)
         self.start = (start_pos[0], start_pos[1])
         self.end = end_pos
 
     def update(self):
-        if self.rect.center == self.end:
+        if not ((0 <= self.rect.center[0] <= WIDTH) and (0 <= self.rect.center[1] <= HEIGHT)):
             self.game.particles.append(particles.Explosion(self.rect.center, 10, 10, self.game.screen))
             self.kill()
         else:
-            self.hyp += 5
-            x = - int(self.hyp * math.cos(self.angle))
-            y = - int(self.hyp * math.sin(self.angle))
-            self.rect.center = x + self.start[0], self.start[1] - y
+            self.hyp += 1
+            x = int(self.hyp * self.dx / 20)#- (self.hyp * math.cos(self.angle))
+            y = int(self.hyp * self.dy / 20)#- (self.hyp * math.sin(self.angle))
+            self.rect.center = x + self.start[0], self.start[1] + y
 
 
 class Character(pygame.sprite.Sprite):
-    def __init__(self, game):
+    def __init__(self, game, character_class):
         pygame.sprite.Sprite.__init__(self)
         self.frame = 0
         self.image = load_image(f'run{self.frame}.png', -1)
@@ -98,9 +111,13 @@ class Character(pygame.sprite.Sprite):
         self.acc = vector(0, 0)
         self.game = game
         self.direction = -1
-        self.coins = 15
-        self.health = 100
-        self.maxHealth = 100
+        self.clas = character_class
+        self.coins = CLASSES[self.clas][2]
+        self.maxHealth = CLASSES[self.clas][0]
+        self.health = self.maxHealth
+        self.dmg = CLASSES[self.clas][1]
+        self.walk = CLASSES[self.clas][3]
+        self.sprint = CLASSES[self.clas][4]
         self.dead = False
 
     def update(self):
@@ -116,22 +133,25 @@ class Character(pygame.sprite.Sprite):
         
         keys = pygame.key.get_pressed()
         if keys[pygame.K_d] or keys[pygame.K_RIGHT]:
-            self.acc.x = 1.5
+            self.acc.x = self.walk
             self.direction = -1
             if pygame.sprite.spritecollide(self, self.game.platforms, False):
                 self.frame += 1
 
         if keys[pygame.K_a] or keys[pygame.K_LEFT]:
-            self.acc.x = -1.5
+            self.acc.x = - self.walk
             self.direction = 1
             if pygame.sprite.spritecollide(self, self.game.platforms, False):
                 self.frame += 1
-        self.frame = self.frame % 6
 
         if keys[pygame.K_SPACE] or keys[pygame.K_UP] or keys[pygame.K_w]:
             self.jump()
-
         
+        if keys[pygame.K_LSHIFT] or keys[pygame.K_RSHIFT]:
+            self.acc.x *= self.sprint
+            self.acc.y /= self.sprint
+            self.frame += 1
+        self.frame = self.frame % 6
         self.acc.x += self.vel.x * (-0.25)
         self.vel += self.acc
         self.world_pos[0] += self.vel.x + 0.5 * self.acc.x
@@ -167,8 +187,8 @@ class Character(pygame.sprite.Sprite):
         if enhits:
             self.health -= 10
             self.game.particles.append(particles.Explosion(enhits[0].rect.center, 100, 100, self.game.screen))
+            en = MeleeEnemy(self.game, self.game.lvl)
             enhits[0].kill()
-            en = MeleeEnemy(self.game)
         
         self.world_pos = [int(i) for i in self.world_pos]
         
