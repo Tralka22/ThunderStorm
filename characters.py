@@ -6,6 +6,7 @@ import sys
 import os
 
 vector = pygame.math.Vector2
+MORTAL = True
 FPS = 60
 WIDTH = 800
 HEIGHT = 600
@@ -26,20 +27,19 @@ def load_image(name, colorkey=None):
 
 
 class MeleeEnemy(pygame.sprite.Sprite):
-    def __init__(self, game, lvl):
+    def __init__(self, game):
         pygame.sprite.Sprite.__init__(self)
         self.image = load_image('enemy1.png', -1)
         self.rect = self.image.get_rect()
-        self.rect.center = (10, 10)
+        self.rect.center = (random.choice([10, WIDTH - 10]), random.choice([10, HEIGHT - 10]))
         self.angle = 0
         self.game = game
-        self.lv = lvl
         self.game.all_sprites.add(self)
         self.game.enemies_mel.add(self)
 
     def update(self):
-        n1 = random.randint(-2, 2)
-        n2 = random.randint(-2, 2)
+        n1 = 1 + random.uniform(-0.2, 0.2)
+        n2 = 1 + random.uniform(-0.2, 0.2)
 
         player_pos = self.game.player.rect.center
         
@@ -47,21 +47,23 @@ class MeleeEnemy(pygame.sprite.Sprite):
         delta_y = player_pos[1] - self.rect.center[1]
 
         if delta_x != 0:
-            n1 += self.lv * delta_x // abs(delta_x)
+            n1 *= self.game.lvl * delta_x // abs(delta_x)
         if delta_y != 0:
-            n2 += self.lv * delta_y // abs(delta_y)
+            n2 *= self.game.lvl * delta_y // abs(delta_y)
         
         cr = (self.rect.center[0] + n1, self.rect.center[1] + n2)
         
         self.angle = 45 - int(math.atan2(delta_y, delta_x) * 180 / math.pi)
         self.image = load_image('enemy1.png', -1)
+        
         self.image = pygame.transform.rotate(self.image, self.angle)
         self.rect = self.image.get_rect()
         self.rect.center = cr
         hitts = pygame.sprite.spritecollide(self, self.game.bullets, False)
         if hitts:
             self.game.particles.append(particles.Explosion(self.rect.center, 10, 10, self.game.screen))
-            en = MeleeEnemy(self.game, self.game.lvl)
+            for i in range(2):
+                en = MeleeEnemy(self.game)
             self.game.player.coins += 10
             self.game.lvl += 1
             hitts[0].kill()
@@ -187,7 +189,7 @@ class Character(pygame.sprite.Sprite):
         if enhits:
             self.health -= 10
             self.game.particles.append(particles.Explosion(enhits[0].rect.center, 100, 100, self.game.screen))
-            en = MeleeEnemy(self.game, self.game.lvl)
+            en = MeleeEnemy(self.game)
             enhits[0].kill()
         
         self.world_pos = [int(i) for i in self.world_pos]
@@ -202,7 +204,7 @@ class Character(pygame.sprite.Sprite):
             self.health = self.maxHealth
         if self.health <= 0:
             if not self.dead:
-                self.dead = True
+                self.dead = MORTAL
             self.health = 0
         self.image = load_image(f'run{self.frame}.png', -1)
         if self.direction == 1:

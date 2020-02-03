@@ -4,8 +4,6 @@ import random
 import os
 os.environ['SDL_VIDEO_WINDOW_POS'] = '0,0'
 
-cl = 'dev'
-
 FPS = 60
 WIDTH = 800
 HEIGHT = 600
@@ -32,6 +30,19 @@ class Game:
         pygame.display.set_caption('Thunderstorm')
         pygame.display.set_icon(characters.load_image('game-icon.png', -1))
         self.clock = pygame.time.Clock()
+        file = open('data/intro.txt', 'rt')
+        data = file.read().split('\n')
+        file.close()
+        for i in range(len(data)):
+            text = pygame.font.Font('data/joker.ttf', 30).render(data[i], 1, (255, 255, 255))
+            self.screen.blit(text, (5, i * 25 + 5))
+        pygame.display.flip()
+        watching = True
+        while watching:
+            for event in pygame.event.get():
+                if event.type == pygame.KEYUP:
+                    watching = False
+            self.clock.tick(120)
         pygame.mixer.music.load('data/theme-2.wav')
         self.cursor_active = pygame.mouse.get_focused()
         self.mouse_pos = pygame.mouse.get_pos()
@@ -39,9 +50,41 @@ class Game:
         pygame.mouse.set_visible(False)
         self.running = True
 
+    def choose_hat(self):
+        self.screen.fill((0, 0, 0))
+        text = pygame.font.Font('data/joker.ttf', 30).render('CHOOSE YOUR HAT!', 1, (255, 255, 255))
+        self.screen.blit(text, (200, 5))
+        text = pygame.font.Font('data/joker.ttf', 30).render('MAGICIAN', 1, (255, 255, 255))
+        self.screen.blit(text, (520, 50))
+        text = pygame.font.Font('data/joker.ttf', 30).render('WARRIOR', 1, (255, 255, 255))
+        self.screen.blit(text, (50, 50))
+        pygame.display.flip()
+        hat_chosen = False
+        hat = 'warrior'
+        while not hat_chosen:
+            for event in pygame.event.get():
+                if event.type == pygame.MOUSEMOTION:
+                    self.cursor_active = pygame.mouse.get_focused()
+                    if self.cursor_active:
+                        self.mouse_pos = event.pos
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if event.pos[0] > WIDTH // 2:
+                        hat = 'magician'
+                    else:
+                        hat = 'warrior'
+                    hat_chosen = True
+            
+            if self.cursor_active:
+                cursor = characters.load_image('cursor.png', -1)
+                self.screen.blit(cursor, self.mouse_pos)
+            pygame.display.flip()
+            self.clock.tick(60)
+        self.clac = hat
+
     def new(self):
+        self.choose_hat()
         self.all_sprites = pygame.sprite.Group()
-        self.player = characters.Character(self, cl)
+        self.player = characters.Character(self, self.clac)
         self.platforms = pygame.sprite.Group()
         self.bullets = pygame.sprite.Group()
         self.all_sprites.add(self.player)
@@ -51,10 +94,9 @@ class Game:
             self.platforms.add(p1)
         self.particles = []
         self.enemies_mel = pygame.sprite.Group()
-        e = characters.MeleeEnemy(self, 1)
+        e = characters.MeleeEnemy(self)
         self.paused = False
         self.fs = False
-        self.player.dead = False
         self.lvl = 1
         pygame.mixer.music.play(-1)
         self.run()
