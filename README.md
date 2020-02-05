@@ -11,8 +11,8 @@ Cool 2D roguelike
 - [x] Music
 - [x] Pause
 - [x] Fullscreen option
-- [x] Death (without animation, just resets the game)
+- [x] Death
 - [x] Enhanced weapon system
 - [x] Cool hats!
-- [ ] Cut-scenes
-- [ ] Settings
+- [x] Cut-scenes
+- [x] Boss with vampirism (every 10 levels)
