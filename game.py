@@ -40,7 +40,7 @@ class Game:
         watching = True
         while watching:
             for event in pygame.event.get():
-                if event.type == pygame.KEYUP:
+                if event.type in [pygame.KEYUP, pygame.MOUSEBUTTONDOWN]:
                     watching = False
             self.clock.tick(120)
         pygame.mixer.music.load('data/theme-2.wav')
@@ -51,38 +51,52 @@ class Game:
         self.running = True
 
     def choose_hat(self):
-        self.screen.fill((0, 0, 0))
-        text = pygame.font.Font('data/joker.ttf', 30).render('CHOOSE YOUR HAT!', 1, (255, 255, 255))
-        self.screen.blit(text, (200, 5))
-        text = pygame.font.Font('data/joker.ttf', 30).render('MAGICIAN', 1, (255, 255, 255))
-        self.screen.blit(text, (520, 50))
-        text = pygame.font.Font('data/joker.ttf', 30).render('WARRIOR', 1, (255, 255, 255))
-        self.screen.blit(text, (50, 50))
-        pygame.display.flip()
         hat_chosen = False
-        hat = 'warrior'
+        hat = 0
+        hats = list(characters.CLASSES.keys())
         while not hat_chosen:
             for event in pygame.event.get():
                 if event.type == pygame.MOUSEMOTION:
                     self.cursor_active = pygame.mouse.get_focused()
                     if self.cursor_active:
                         self.mouse_pos = event.pos
-                if event.type == pygame.MOUSEBUTTONDOWN:
-                    if event.pos[0] > WIDTH // 2:
-                        hat = 'magician'
+                if event.type == pygame.KEYDOWN:
+                    if event.key == 276:
+                        hat -= 1
+                    if event.key == 275:
+                        hat += 1
                     else:
-                        hat = 'warrior'
-                    hat_chosen = True
+                        hat_chosen = True
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if event.pos[0] < WIDTH // 2:
+                        hat -= 1
+                    else:
+                        hat += 1
+            hat = hat % len(hats)
+            
+            self.screen.fill((0, 128, 0))
+            
+            text = pygame.font.Font('data/joker.ttf', 30).render('CHOOSE YOUR HAT!', 1, (255, 255, 255))
+            self.screen.blit(text, (200, 5))
+            
+            text = pygame.font.Font('data/joker.ttf', 30).render(hats[hat].upper(), 1, (255, 255, 255))
+            self.screen.blit(text, (220, 100))
+            
+            hat_image = characters.load_image(f'{hats[hat]}.png', -1)
+            hat_image = pygame.transform.scale(hat_image, (200, 200))
+            self.screen.blit(hat_image, (WIDTH // 2 - 100, HEIGHT // 2 - 100))
             
             if self.cursor_active:
                 cursor = characters.load_image('cursor.png', -1)
                 self.screen.blit(cursor, self.mouse_pos)
+        
             pygame.display.flip()
             self.clock.tick(60)
-        self.clac = hat
+        self.clac = hats[hat]
 
     def new(self):
         self.choose_hat()
+        self.lvl = 1
         self.all_sprites = pygame.sprite.Group()
         self.player = characters.Character(self, self.clac)
         self.platforms = pygame.sprite.Group()
@@ -97,7 +111,6 @@ class Game:
         e = characters.MeleeEnemy(self)
         self.paused = False
         self.fs = False
-        self.lvl = 1
         pygame.mixer.music.play(-1)
         self.run()
 
@@ -115,6 +128,12 @@ class Game:
         self.all_sprites.update()
         if self.player.dead:
             self.new()
+        file = open('highscore.txt', 'rt')
+        heh = int(file.read())
+        file.close()
+        if self.player.coins >= heh:
+            fil = open('highscore.txt', 'wt')
+            print(self.player.coins, file=fil)
 
     def events(self):
         for event in pygame.event.get():
@@ -142,6 +161,12 @@ class Game:
         self.screen.blit(pygame.transform.scale(characters.load_image("sky.png"), (WIDTH, HEIGHT)), (0, 0))
         self.all_sprites.draw(self.screen)
         
+        for enemy in self.enemies_mel.sprites():
+            posx = enemy.rect.topleft[0]
+            posy = enemy.rect.midtop[1] - 20
+            pygame.draw.rect(self.screen, (0, 0, 0), (posx, posy, 100, 20))
+            pygame.draw.rect(self.screen, (0, 255, 0), (posx, posy, int(100 * enemy.hp / enemy.mhp), 20))
+        
         hat = characters.load_image(f'{self.player.clas}.png', -1)
         self.screen.blit(hat, (self.player.rect.topleft[0], self.player.rect.topleft[1] - 25))
         
@@ -160,6 +185,12 @@ class Game:
         
         text = pygame.font.Font('data/joker.ttf', 30).render(f'{self.player.coins}$', 1, (255, 255, 0))
         self.screen.blit(text, (5, 5))
+        
+        file = open('highscore.txt', 'rt')
+        heh = int(file.read())
+        file.close()
+        text = pygame.font.Font('data/joker.ttf', 30).render(f'Best score: {heh}$', 1, (255, 255, 0))
+        self.screen.blit(text, (5, 40))
         
         if self.paused:
             psm = pygame.Surface((WIDTH, HEIGHT))
